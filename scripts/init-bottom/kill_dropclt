@@ -1,0 +1,35 @@
+#!/bin/sh
+
+PREREQ="dropbear"
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /scripts/functions
+NAME=dropbear
+PROG=/sbin/dropbear
+
+ignore=""
+for s in $(cat /var/run/${NAME}*.pid); do
+	ignore="${ignore} ${s}"
+done
+
+for pid in $(pidof "${NAME}"); do
+	grep -F -q -e "$PROG" "/proc/${pid}/cmdline" || continue
+	skip=false
+	for server in ${ignore}; do
+		[ "${pid}" = "${server}" ] && skip=true && break
+	done
+	${skip} && continue
+	kill "${pid}"
+	sleep 2
+	kill -9 "${pid}"
+done

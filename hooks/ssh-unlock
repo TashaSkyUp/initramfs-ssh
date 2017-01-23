@@ -1,0 +1,42 @@
+#!/bin/sh
+PREREQ="dropbear"
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0	
+	;;
+esac
+
+. "${CONFDIR}/initramfs.conf"
+. /usr/share/initramfs-tools/hook-functions
+# Begin real processing below this line
+
+if [ "${DROPBEAR}" != "y" ]; then
+	exit 0
+fi
+
+[ -f /usr/bin/scp ] && copy_exec /usr/bin/scp bin/
+
+cat > ${DESTDIR}/etc/motd << EOF
+${version}
+-----------------------------------------------------------------------------
+
+Welcome!
+
+Unlock the drives, after you are done run the following to continue the boot process:
+        finished
+EOF
+
+cat > ${DESTDIR}/bin/finished << EOF
+#!/bin/sh
+touch /tmp/ssh-unlock.done
+[ -f /tmp/phys ] &&  kill -9 \$(cat /tmp/phys)
+exit 0
+EOF
+
+chmod 755 "${DESTDIR}/bin/finished"

@@ -1,0 +1,35 @@
+#!/bin/sh
+PREREQ="mdadm"
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /scripts/functions
+
+if [ ! -x "/bin/finished" ]; then
+	exit 0
+fi
+
+echo "*** Press enter to drop to shell and unlock disks locally. Waiting for disks to be unlocked over ssh. ***"
+
+shellpid=
+
+while true; do
+	
+	read -t 1 tmp
+	if [ $? -eq 0 ]; then
+		cat /etc/motd
+		sh -c 'echo $$ >> /tmp/phys && exec sh --login'
+	fi
+
+	[ -f /tmp/ssh-unlock.done ] && break
+done
+
